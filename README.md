@@ -5,12 +5,12 @@ Open up two terminals.
 
 **On Terminal 1 (Alice) run:**
 ```
-cargo run -- alice
+cargo run --bin fhe-sunscreen -- alice
 ```
 
 **On Terminal 2 (Bob) run:**
 ```
-cargo run -- bob /ip4/127.0.0.1/tcp/<IP-address-of-alice-node>
+cargo run --bin fhe-sunscreen -- bob /ip4/127.0.0.1/tcp/<IP-address-of-alice-node>
 ```
 
 Wait for Bob's IPFS node to say `ConnectionEstablished`.
@@ -25,7 +25,7 @@ Then run the following commands...
 MOVE alice {"x":3,"y":2}
 GET POSITION alice
 ```
-On terminal 1 (Alice), `GET POSITION alice` will decrypt the position.
+On terminal 1 (Alice), `GET POSITION alice` will decrypt the position, as alice is the encrypter.
 
 Because only Alice can decrypt her position, attempting to `GET alice` with Terminal 2 (Bob) will fail
 with a `TooMuchNoise` error.
@@ -55,20 +55,6 @@ MOVE alice {"x":11,"y":1}
 GET POSITION alice
 ```
 
-
-### TODO: explore ways to compute on shared state
-We will need MPC or private-set-intersection (PSI) for the AVS node to calculate
-whether Alice and Bob's positions are close enough to each other to see each other's position.
-
-[PSI](https://github.com/cursive-team/2P-PSI): analogous to bitmasks in traditional fog-of-war implementations?
-Need some way to run functions on shared encrypted state, then conditionally reveal encrypted state to some users.
-- PSI being used for confidential "coincidence of wants" in social apps:
-    - tinder
-    - job matching
-    - auctions
-    - liking/upvoting risky content / political views
-
-- Writing
-    - [ ] Cryptographic fog of war
-    - [ ] Privacy and anonymity mining as a basis for an AVS
-    - [ ] Gaming as a Trojan horse for private money transfer and confidential compute
+The AVS node does the FHE updates, and never knows Alice's position.
+Only Alice can decrypt her position.
+Alice then allows her ally Bob to decrypt her position after sharing FHE decryption keys via shared secret.

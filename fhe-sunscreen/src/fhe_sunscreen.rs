@@ -25,6 +25,8 @@ use sunscreen::{
     Compiler
 };
 
+use crate::UserKeyPair;
+
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Position {
@@ -55,6 +57,8 @@ pub struct User {
     ecdh_private_key: EphemeralSecret,
     pub runtime: FheRuntime,
     pub name: Option<String>,
+    // encrypted FHE decryption keys from peers who shared it with this user
+    pub peer_fhe_decryption_keys: std::collections::HashMap<String, UserKeyPair>,
 }
 impl User {
 
@@ -75,6 +79,7 @@ impl User {
             ecdh_private_key: ecdh_private_key,
             runtime: runtime,
             name: Some(name.to_string()),
+            peer_fhe_decryption_keys: std::collections::HashMap::new(),
         })
     }
 
@@ -87,6 +92,21 @@ impl User {
         ecdh::encrypt(&alice_pkey, &shared_secret_key)
     }
 
+    pub fn decrypt_key_from_alice(
+        &self,
+        encrypted_fhe_private_key: &[u8],
+        alice_public_key: &k256::PublicKey
+    ) -> PrivateKey {
+
+        println!("Decrypting alice keys using Bob's shared secret...");
+        let shared_secret_key = ecdh::compute_shared_secret(&self.ecdh_private_key, alice_public_key);
+        let alice_private_key_bytes = ecdh::decrypt(&encrypted_fhe_private_key, &shared_secret_key);
+        let alice_private_key = bincode::deserialize(&alice_private_key_bytes)
+            .expect("bincode::deserialize(alice_pkey");
+
+        return alice_private_key
+    }
+
     pub fn create_move_transaction(&self, position: Position) -> Result<EncryptedPosition, Error> {
         Ok(EncryptedPosition {
             x: self.runtime.encrypt(Rational::try_from(position.x)?, &self.fhe_public_key)?,
@@ -94,7 +114,7 @@ impl User {
         })
     }
 
-    pub fn decrypt_position(&self, position: EncryptedPosition) -> Result<Position, Error> {
+    pub fn decrypt_own_position(&self, position: EncryptedPosition) -> Result<Position, Error> {
 
         let position_x: Rational = self.runtime
             .decrypt(&position.x, &self.fhe_private_key)?;
@@ -108,16 +128,39 @@ impl User {
 
         Ok(Position { x, y })
     }
+
+    pub fn decrypt_peer_position(&self, position: EncryptedPosition, peer_id: &str) -> Result<Position, Error> {
+
+        let peer_keys = self.peer_fhe_decryption_keys.get(peer_id)
+            .expect(&format!("UserKeyPair not found for peer_id: {peer_id}"));
+
+        // decrypt alice's FHE private key using shared secret
+        let fhe_decryption_key = self.decrypt_key_from_alice(
+            &peer_keys.fhe_private_key_encrypted, // alice's encrypted FHE key
+            &peer_keys.ecdh_public_key // alice's ECDH public key for Bob to compute shared secret
+        );
+
+        let position_x: Rational = self
+            .runtime
+            .decrypt(&position.x, &fhe_decryption_key)?;
+
+        let position_y: Rational = self
+            .runtime
+            .decrypt(&position.y, &fhe_decryption_key)?;
+
+        let x: f64 = position_x.into();
+        let y = position_y.into();
+
+        Ok(Position { x, y })
+    }
+
 }
 
 pub struct AVS {
     pub compiled_move_position: CompiledFheProgram,
-    pub ecdh_public_key: k256::PublicKey,
-    ecdh_private_key: EphemeralSecret,
     pub encrypted_positions: std::collections::HashMap<String, EncryptedPosition>,
-    pub user_decryption_keys: std::collections::HashMap<String, PrivateKey>,
-    pub peer_public_keys: std::collections::HashMap<String, k256::PublicKey>,
     runtime: FheRuntime,
+    pub peer_public_keys: std::collections::HashMap<String, k256::PublicKey>,
     pub peer_id: Option<libp2p::PeerId>,
     pub peer_ids: std::collections::HashMap<String, libp2p::PeerId>,
 }
@@ -130,19 +173,12 @@ impl AVS {
             .compile()?;
 
         let runtime= FheRuntime::new(app.params())?;
-        let (
-            bob_secret,
-            bob_public
-        ) = ecdh::generate_ecdh_keys();
 
         Ok(AVS {
             compiled_move_position: app.get_fhe_program(move_position).unwrap().clone(),
-            ecdh_public_key: bob_public,
-            ecdh_private_key: bob_secret,
             encrypted_positions: std::collections::HashMap::new(),
-            user_decryption_keys: std::collections::HashMap::new(),
-            peer_public_keys: std::collections::HashMap::new(),
             runtime: runtime,
+            peer_public_keys: std::collections::HashMap::new(),
             peer_id: None,
             peer_ids: std::collections::HashMap::new(),
         })
@@ -150,20 +186,6 @@ impl AVS {
 
     pub fn set_peer_id(&mut self, peer_id: Option<libp2p::PeerId>) {
         self.peer_id = peer_id;
-    }
-
-    pub fn decrypt_key_from_alice(
-        &self,
-        encrypted_fhe_private_key: &[u8],
-        alice_public_key: &k256::PublicKey
-    ) -> PrivateKey {
-
-        let shared_secret_key = ecdh::compute_shared_secret(&self.ecdh_private_key, alice_public_key);
-        let alice_private_key_bytes = ecdh::decrypt(&encrypted_fhe_private_key, &shared_secret_key);
-        let alice_private_key = bincode::deserialize(&alice_private_key_bytes)
-            .expect("bincode::deserialize(alice_pkey");
-
-        return alice_private_key
     }
 
     pub fn get_public_key_hex(&self, public_key: &PublicKey) -> String {
@@ -185,25 +207,6 @@ impl AVS {
                 })
             }
         }
-    }
-
-    pub fn decrypt_position_admin(&self, position: EncryptedPosition, peer_id: &str) -> Result<Position, Error> {
-
-        let decryption_key = self.user_decryption_keys.get(peer_id)
-            .expect("peer_id does not have a private key stored in AVS");
-
-        let position_x: Rational = self
-            .runtime
-            .decrypt(&position.x, decryption_key)?;
-
-        let position_y: Rational = self
-            .runtime
-            .decrypt(&position.y, decryption_key)?;
-
-        let x: f64 = position_x.into();
-        let y = position_y.into();
-
-        Ok(Position { x, y })
     }
 
     pub fn run_contract(

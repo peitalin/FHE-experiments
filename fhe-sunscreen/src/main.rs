@@ -173,7 +173,7 @@ fn handle_connection_established(
     let local_peer_id = swarm.local_peer_id().clone();
     let key = form_avs_public_key(&local_peer_id.to_string());
     let kademlia = &mut swarm.behaviour_mut().kademlia;
-    let avs_public_key_value: Vec<u8> = avs.ecdh_public_key.to_sec1_bytes().to_vec();
+    let avs_public_key_value: Vec<u8> = user.ecdh_public_key.to_sec1_bytes().to_vec();
 
     kademlia.put_record(
         kad::Record {
@@ -216,18 +216,8 @@ fn handle_get_record_result(
         let peer_keys: UserKeyPair = serde_json::from_slice(&value)
             .expect("serde_json::from_utf8() failed");
 
-        println!("Decrypting alice keys using Bob's shared secret...");
-        let peer_ecdh_public_key: k256::PublicKey = serde_json::from_slice(&peer_keys.ecdh_public_key)
-            .expect("serde_json::from_slice(alice_public_key failed");
-
-        // decrypt alice's FHE private key using shared secret
-        let peer_fhe_private_key = avs.decrypt_key_from_alice(
-            &peer_keys.fhe_private_key_encrypted, // alice's encrypted FHE key
-            &peer_ecdh_public_key // alice's ECDH public key for Bob to compute shared secret
-        );
-
-        avs.user_decryption_keys.insert(peer_id, peer_fhe_private_key.clone());
-        println!("saved alice's fhe private key in local AVS node for testing");
+        user.peer_fhe_decryption_keys.insert(peer_id, peer_keys);
+        println!("saved alice's encrypted FHE keys and ECDH public key in AVS node");
 
     } else if is_position_key(key_str) {
         // encrypted position
@@ -238,12 +228,13 @@ fn handle_get_record_result(
 
         let peer_id = get_peer_id_from_position_key(&key_str);
 
-        println!("decoding encrypted positions...");
+        println!("Decoding encrypted positions...");
         println!("publisher: {:?}", publisher);
         println!("avs.peer_id: {:?}", avs.peer_id);
+
         let position = match publisher == avs.peer_id {
-            true  => user.decrypt_position(encrypted_position)?,
-            false => avs.decrypt_position_admin(encrypted_position, &peer_id)?,
+            true  => user.decrypt_own_position(encrypted_position)?,
+            false => user.decrypt_peer_position(encrypted_position, &peer_id)?,
         };
 
         println!("Decrypted position for {key_str}: {position:?}");
@@ -317,7 +308,6 @@ fn handle_input_line(
                     return;
                 }
             };
-            // let peer_id = avs.peer_ids.get(name).expect("bob peer_id missing").clone().to_string();
 
             // Get Bob's ECDH public key
             let avs_peer_ecdh_public_key = match avs.peer_public_keys
@@ -333,11 +323,8 @@ fn handle_input_line(
             println!("encrypting {}'s private_key for bob...", user.name.as_ref().expect("user.name missing"));
             let alice_fhe_private_key_encrypted = user.encrypt_fhe_key_for_peer(avs_peer_ecdh_public_key);
 
-            let alice_ecdh_public_key = serde_json::to_vec(&user.ecdh_public_key)
-                .expect("serde_json::to_vec(&alice.public_key) failed");
-
             let encrypted_fhe_keys_str = serde_json::to_string(&(UserKeyPair {
-                ecdh_public_key: alice_ecdh_public_key.clone(),
+                ecdh_public_key: user.ecdh_public_key,
                 fhe_private_key_encrypted: alice_fhe_private_key_encrypted
             })).expect("serde_json::to_string(UserKeyPair) failed");
 
@@ -399,7 +386,7 @@ fn handle_input_line(
 
 #[derive(Serialize, Deserialize)]
 struct UserKeyPair {
-    ecdh_public_key: Vec<u8>,
+    ecdh_public_key: k256::PublicKey,
     fhe_private_key_encrypted: Vec<u8>,
 }
 
