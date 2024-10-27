@@ -20,7 +20,7 @@ fn main() {
 
     simple_example(client_key.clone(), server_key.clone());
 
-    distance_example(client_key, server_key);
+    // distance_example(client_key, server_key);
 
 }
 
