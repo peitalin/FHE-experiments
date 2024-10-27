@@ -1,6 +1,13 @@
 
 ### FHE fog-of-war tests with libp2p
 
+Main drawback of suncreen's BFV scheme is noise:
+You can only do a limited number of operations on the ciphertext and they do not support bootstrapping yet.
+
+So we will need to implement our own bootstrapping / recryption solution.
+
+
+### Demo
 Open up two terminals.
 
 **On Terminal 1 (Alice) run:**

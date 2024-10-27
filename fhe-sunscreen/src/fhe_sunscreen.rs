@@ -51,11 +51,14 @@ pub fn move_position(
 }
 
 pub struct User {
+    // Sunscreen FHE keys
     pub fhe_public_key: PublicKey,
     fhe_private_key: PrivateKey,
+    pub runtime: FheRuntime,
+    // Elliptic Curve Diffie-Hellman shared secret keys
     pub ecdh_public_key: k256::PublicKey,
     ecdh_private_key: EphemeralSecret,
-    pub runtime: FheRuntime,
+    // Name of the node, for convenience
     pub name: Option<String>,
     // encrypted FHE decryption keys from peers who shared it with this user
     pub peer_fhe_decryption_keys: std::collections::HashMap<String, UserKeyPair>,
@@ -75,9 +78,9 @@ impl User {
         Ok(User {
             fhe_public_key: fhe_public_key,
             fhe_private_key: fhe_private_key,
+            runtime: runtime,
             ecdh_public_key: ecdh_public_key,
             ecdh_private_key: ecdh_private_key,
-            runtime: runtime,
             name: Some(name.to_string()),
             peer_fhe_decryption_keys: std::collections::HashMap::new(),
         })
@@ -92,7 +95,7 @@ impl User {
         ecdh::encrypt(&alice_pkey, &shared_secret_key)
     }
 
-    pub fn decrypt_key_from_alice(
+    pub fn decrypt_fhe_key_from_peer(
         &self,
         encrypted_fhe_private_key: &[u8],
         alice_public_key: &k256::PublicKey
@@ -135,7 +138,7 @@ impl User {
             .expect(&format!("UserKeyPair not found for peer_id: {peer_id}"));
 
         // decrypt alice's FHE private key using shared secret
-        let fhe_decryption_key = self.decrypt_key_from_alice(
+        let fhe_decryption_key = self.decrypt_fhe_key_from_peer(
             &peer_keys.fhe_private_key_encrypted, // alice's encrypted FHE key
             &peer_keys.ecdh_public_key // alice's ECDH public key for Bob to compute shared secret
         );
@@ -157,11 +160,16 @@ impl User {
 }
 
 pub struct AVS {
+    // FHE move program and runtime
     pub compiled_move_position: CompiledFheProgram,
-    pub encrypted_positions: std::collections::HashMap<String, EncryptedPosition>,
     runtime: FheRuntime,
+    // FHE encrypted positions
+    pub encrypted_positions: std::collections::HashMap<String, EncryptedPosition>,
+    // Peer ECDH public keys: HashMap(name -> ECDH-PublickKey)
     pub peer_public_keys: std::collections::HashMap<String, k256::PublicKey>,
+    // This AVS node's peerId
     pub peer_id: Option<libp2p::PeerId>,
+    // HashMap<name -> PeerId>
     pub peer_ids: std::collections::HashMap<String, libp2p::PeerId>,
 }
 impl AVS {
