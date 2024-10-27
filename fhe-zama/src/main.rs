@@ -12,11 +12,40 @@ struct Position {
 }
 
 fn main() {
+
     let config = ConfigBuilder::default().build();
 
     // Client-side
     let (client_key, server_key) = generate_keys(config);
 
+    simple_example(client_key.clone(), server_key.clone());
+
+    distance_example(client_key, server_key);
+
+}
+
+fn simple_example(client_key: tfhe::ClientKey, server_key: tfhe::ServerKey) {
+    let clear_a = 27_u32;
+    let clear_b = 128_u32;
+
+    let a = FheUint32::encrypt(clear_a, &client_key);
+    let b = FheUint32::encrypt(clear_b, &client_key);
+
+    //Server-side
+    set_server_key(server_key);
+    let result = a + b;
+
+    //Client-side
+    let decrypted_result: u32 = result.decrypt(&client_key);
+    let clear_result = clear_a + clear_b;
+
+    assert_eq!(decrypted_result, clear_result);
+}
+
+
+fn distance_example(client_key: tfhe::ClientKey, server_key: tfhe::ServerKey) {
+
+    // Client-side
     let p1 = Position {
         x: 3,
         y: 2
