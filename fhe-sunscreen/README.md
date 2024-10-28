@@ -66,24 +66,4 @@ The AVS node does the FHE updates, and never knows Alice's position.
 Only Alice can decrypt her position.
 Alice then allows her ally Bob to decrypt her position after sharing FHE decryption keys via shared secret.
 
-#### TODO
-- remove double queries bug on IPFS
 
-
-
-### TODO: explore ways to compute on shared state
-We will need MPC or private-set-intersection (PSI) for the AVS node to calculate
-whether Alice and Bob's positions are close enough to each other to see each other's position.
-
-[PSI](https://github.com/cursive-team/2P-PSI): analogous to bitmasks in traditional fog-of-war implementations?
-Need some way to run functions on shared encrypted state, then conditionally reveal encrypted state to some users.
-- PSI being used for confidential "coincidence of wants" in social apps:
-    - tinder
-    - job matching
-    - auctions
-    - liking/upvoting risky content / political views
-
-- Writing
-    - [ ] Cryptographic fog of war
-    - [ ] Privacy and anonymity mining as a basis for an AVS
-    - [ ] Gaming as a Trojan horse for private money transfer and confidential compute
