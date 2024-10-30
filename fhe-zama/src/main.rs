@@ -77,10 +77,10 @@ async fn main() -> Result<()> {
 
             // Encrypt a message with the society's public-key.
             let ciphertext = mpc_pub_key.encrypt(msg.clone());
-            println!("\tSending to MPC server to decrypt and run FHE operations on...");
+            println!("\tSending to MPC network to decrypt and run FHE operations on...");
 
             // Server-side
-            println!("\nServer:");
+            println!("\nMPC Network:");
             println!("\tFetching MPC shares and decrypting position...");
             let result = mpc_network.mpc_decrypt(ciphertext)?;
             // MPC network will also perform FHE operations after MPC decrypting the msg
