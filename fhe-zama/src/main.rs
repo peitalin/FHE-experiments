@@ -88,6 +88,13 @@ async fn main() -> Result<()> {
             println!("\tDeserializing result and running FHE operations on ciphertext +1...");
             let fhe_msg: FheUint32 = bincode::deserialize(&result)?;
             let fhe_msg2 = bincode::serialize(&(fhe_msg + 1))?;
+
+            // Here you can compare Alice and Bob's positions as they as encrypted under the same FHE key
+            // The MPC network can decrypt comparison results (alice.x > bob.x) without revealing the
+            // positions of Alice and Bob (with some trust assumptions on the MPC network).
+            // Then conditional on Alice being "close" to Bob, the MPC network can decrypt Bob's position
+            // re-encrypt it using Alice's pubkey, and send it to Alice.
+
             println!("\tSerializing response and sending back to user...");
             // MPC network needs to encrypt the FHE ciphertext response using Alice's pubkey (ECDH)
             // or it can be intercepted and decrypted by anyone with the fhe_client_key
