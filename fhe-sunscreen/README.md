@@ -1,9 +1,14 @@
 
-### FHE fog-of-war tests with libp2p
+### FHE fog-of-war experiments with libp2p
 
-Main drawback of suncreen's BFV scheme is noise:
+The main limitation of current FHE libraries is that FHE operations only work on ciphertexts encrypted by the same key:
+- This means you can't add Alice's encrypted `a = 1` and Bob's encrypted `b = 2` to get `3` homomorphically (if they are encrypted using different keys).
+- This means you can't do fog-of-war without revealing the plaintext to some trusted intermediary.
+- This example uses EC Diffie-Hellman to share keys with the trust intermediary as an example.
+- Zama has a workaround using DKG in MPC/TEEs for their fhEVM.
+
+Another drawback of Suncreen's BFV scheme is noise management:
 You can only do a limited number of operations on the ciphertext and they do not support bootstrapping yet.
-
 So we will need to implement our own bootstrapping / recryption solution.
 
 
@@ -23,7 +28,6 @@ cargo run --bin fhe-sunscreen -- bob /ip4/127.0.0.1/tcp/<IP-address-of-alice-nod
 Wait for Bob's IPFS node to say `ConnectionEstablished`.
 
 This will create two local IPFS Kademlia DHT nodes to test our FHE fog-of-war demo.
-
 
 Then run the following commands...
 
