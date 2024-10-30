@@ -3,7 +3,7 @@
 
 Build the repo:
 ```
-cargo build --bin fhe-zama --release;
+cargo build --bin fhe-zama --release
 ```
 
 Test out distance calculations and speed of the tfhe-rs library

@@ -11,6 +11,9 @@ use blsttc::{
 };
 use anyhow::{anyhow, Context, Result};
 
+// Based on source:
+// https://github.com/maidsafe/blsttc/tree/master/examples
+
 // the `MpcNetwork` is the "trusted key dealer". The trusted dealer is
 // responsible for key generation. The society creates a master public-key, which anyone can use to
 // encrypt a message to the society's members; the society is also responsible for giving each
@@ -77,6 +80,7 @@ impl MpcNetwork {
 }
 
 
+// assumes 3 nodes for this example.
 pub fn mpc_decrypt(
     society: &mut MpcNetwork,
     ciphertext: blsttc::Ciphertext,
