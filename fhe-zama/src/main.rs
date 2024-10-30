@@ -85,7 +85,7 @@ async fn main() -> Result<()> {
             let result = mpc_network.mpc_decrypt(ciphertext)?;
             // MPC network will also perform FHE operations after MPC decrypting the msg
             set_server_key(mpc_network.fhe_server_key);
-            println!("\tDeserializing result and running FHE operations +1...");
+            println!("\tDeserializing result and running FHE operations on ciphertext +1...");
             let fhe_msg: FheUint32 = bincode::deserialize(&result)?;
             let fhe_msg2 = bincode::serialize(&(fhe_msg + 1))?;
             println!("\tSerializing response and sending back to user...");
