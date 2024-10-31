@@ -18,12 +18,6 @@ Mock MPC(t=1, n=3) network and FHE example.
 ./target/release/fhe-zama mpc -t 1 -n 3
 ```
 
-
-Mock MPC(t=1, n=3) network and FHE example.
-```
-./target/release/fhe-zama mpc -t 1 -n 3
-```
-
 Which outputs
 ```
 Alice:
