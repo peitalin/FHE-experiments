@@ -76,9 +76,6 @@ Diffie-Hellman.
 Need a way to conditionally reveal encrypted state to some users, without the MPC nodes every seeing plaintext.
 - Decrypt Bob just for Alice to see, conditional on Bob being "close" to Alice.
 
-
-whether Alice and Bob's positions are close enough to each other to see each other's position.
-
 Perhap Private-set-intersection (PSI) can help:
 [PSI](https://github.com/gausslabs/MP-PSI/blob/main/pkg/README.md):
 - PSI being used for confidential "coincidence of wants" in social apps:
