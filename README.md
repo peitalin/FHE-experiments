@@ -53,7 +53,7 @@ Then conditional on `should_reveal_bob = true`, the MPC network decrypts Bob's p
 
 
 ### Key issue: conditional decryption
-Need a way to conditionally reveal encrypted state to some users, without the MPC nodes every seeing plaintext.
+Need a way to conditionally reveal encrypted state to some users, without the MPC nodes seeing plaintext.
 - Decrypt Bob just for Alice to see, conditional on Bob being "close" to Alice.
 
 Perhaps private-set-intersection (PSI) can help:
