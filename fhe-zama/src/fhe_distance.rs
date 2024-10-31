@@ -42,7 +42,7 @@ pub fn fhe_distance_example(
     set_server_key(server_key_alice);
     println!("\nServer:");
     println!("\tPerforming FHE operations to calculate distance to new position");
-    let (g, rem) = fhe_distance(&x1, &y1, &x2, &y2);
+    let (g, rem) = fhe_distance_calc(&x1, &y1, &x2, &y2);
     let reveal_position = g.le(FOW_VIEW_RANGE * PRECISION.pow(2));
 
     //Client-side
@@ -70,7 +70,7 @@ fn check_distance(dx: f32, dy: f32) -> f32 {
 }
 
 // Server-side calculation of distance
-fn fhe_distance(
+pub fn fhe_distance_calc(
     x1: &FheUint32, y1: &FheUint32,
     x2: &FheUint32, y2: &FheUint32,
 ) -> (FheUint32, FheUint32) {
@@ -85,16 +85,18 @@ fn fhe_distance(
     let distance_sq = (dx_sq + dy_sq) * PRECISION.pow(2);
 
     let initial_sqrt_guess = 1000_u32;
-    println!("\tinitial_sqrt_guess: {:?}", initial_sqrt_guess);
+    fhe_sqrt_newtons_approx(&distance_sq, initial_sqrt_guess)
+}
+
+pub fn fhe_sqrt_newtons_approx(n: &FheUint32, initial_guess: u32) -> (FheUint32, FheUint32) {
 
     let (g, _rem) = sqrt_newtowns_approx_initial_step(
-        &distance_sq,
-        initial_sqrt_guess
+        &n,
+        initial_guess
     );
     // run ~2 iterations for the square root approximation
     // number of iterations depends on how close your initial_sqrt_guess is
-    let (g, rem) = sqrt_newtowns_approx_iteration(&distance_sq, &g);
-
+    let (g, rem) = sqrt_newtowns_approx_iteration(&n, &g);
     (g, rem)
 }
 

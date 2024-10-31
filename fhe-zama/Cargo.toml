@@ -18,3 +18,4 @@ clap = { version = "4.5.20", features = ["derive"] }
 
 rand = "0.8.5"
 blsttc = { version = "8.0.2" }
+ecdh = { path = "../ecdh" }

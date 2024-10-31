@@ -1386,6 +1386,7 @@ dependencies = [
  "bincode",
  "blsttc",
  "clap",
+ "ecdh",
  "futures",
  "num-traits",
  "rand",

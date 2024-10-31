@@ -5,7 +5,9 @@ use chacha20poly1305::{
     aead::generic_array::{GenericArray, typenum::Unsigned},
     aead::{Aead, AeadCore, KeyInit}
 };
+pub use k256;
 use k256::{ecdh::EphemeralSecret, EncodedPoint};
+
 
 pub fn generate_ecdh_keys() -> (EphemeralSecret, k256::PublicKey) {
 

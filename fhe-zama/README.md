@@ -30,27 +30,59 @@ Time to run: 12.512262417s
 ```
 
 
-### MPC example
+### Threshold FHE example with mock MPC network
 
 Mock MPC(t=1, n=3) network and FHE example.
 ```
 ./target/release/fhe-zama mpc -t 1 -n 3
 ```
 
+Which outputs
+```
 
-### TODO: explore ways to compute on shared state
-We will need MPC or private-set-intersection (PSI) for the AVS node to calculate
+Alice:
+        Encrypting Alice's Position { x: 2, y: 2 } with FHE client_key
+        Serializing and encrypting position with MPC public_key...
+        ==> Sending to MPC_Network
+
+Bob:
+        Encrypting Bob's Position { x: ?, y: ? } with FHE client_key
+        Serializing and encrypting position with MPC public_key...
+        ==> Sending to MPC_Network
+
+MPC_Network:
+        Fetching MPC shares and decrypting for FHE ciphertexts...
+        Running FHE operations on Position ciphertexts...
+        Alice's fog-of-war view range: 11
+        should_reveal_bob?: true
+
+        Bob is within Alice's FOW view range, decrypting the Bob's position...
+        Encrypting response and sending to Alice...
+
+Alice:
+        Alice received and decrypted Bob's Position { x: 4, y: 4 }
+
+Time elapsed: 12.706566s
+```
+
+In the above example `should_reveal_bob` is a FHE ciphertext the MPC network decrypts and sees is `true`.
+Then conditional on `should_reveal_bob = true`, it decrypts Bob's position and re-encrypts it for Alice using
+Diffie-Hellman.
+- This is undesirable as the MPC network is trusted with decrypting Bob's position.
+- We would need a way to Zk-prove that the MPC network decrypted Bob's position if and only if `should_reveal_bob = true`
+
+
+### Key issue: conditional decryption
+Need a way to conditionally reveal encrypted state to some users, without the MPC nodes every seeing plaintext.
+- Decrypt Bob just for Alice to see, conditional on Bob being "close" to Alice.
+
+
 whether Alice and Bob's positions are close enough to each other to see each other's position.
 
+Perhap Private-set-intersection (PSI) can help:
 [PSI](https://github.com/gausslabs/MP-PSI/blob/main/pkg/README.md):
-Need some way to run functions on shared encrypted state, then conditionally reveal encrypted state to some users.
 - PSI being used for confidential "coincidence of wants" in social apps:
     - tinder
     - job matching
     - auctions
     - liking/upvoting risky content / political views
-
-- Writing
-    - [ ] Cryptographic fog of war
-    - [ ] Privacy and anonymity mining as a basis for an AVS
-    - [ ] Gaming as a Trojan horse for private money transfer and confidential compute

@@ -10,8 +10,10 @@ use blsttc::{
     SecretKeyShare
 };
 use anyhow::{anyhow, Context, Result};
+use ecdh;
+use ecdh::k256;
 
-// Based on source:
+// Mock MPC Network source:
 // https://github.com/maidsafe/blsttc/tree/master/examples
 
 // the `MpcNetwork` is the "trusted key dealer". The trusted dealer is
@@ -22,6 +24,8 @@ pub struct MpcNetwork {
     actors: Vec<Actor>,
     pk_set: PublicKeySet,
     pub fhe_server_key: tfhe::ServerKey,
+    pub ecdh_pub_key: k256::PublicKey,
+    ecdh_skey: k256::ecdh::EphemeralSecret,
 }
 
 impl MpcNetwork {
@@ -39,10 +43,14 @@ impl MpcNetwork {
             Actor::new(id, pk_share, sk_share)
         }).collect::<Vec<Actor>>();
 
+        let (ecdh_sk, ecdh_pk) = ecdh::generate_ecdh_keys();
+
         MpcNetwork {
             actors: actors,
             pk_set: pk_set,
-            fhe_server_key
+            fhe_server_key: fhe_server_key,
+            ecdh_pub_key: ecdh_pk,
+            ecdh_skey: ecdh_sk,
         }
     }
 
@@ -77,6 +85,10 @@ impl MpcNetwork {
         mpc_decrypt(self, ciphertext)
     }
 
+    pub fn ecdh_encrypt(&self, msg: &[u8], target_public_key: &k256::PublicKey) -> Vec<u8> {
+        let shared_secret_key = ecdh::compute_shared_secret(&self.ecdh_skey, target_public_key);
+        ecdh::encrypt(&msg, &shared_secret_key)
+    }
 }
 
 
