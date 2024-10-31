@@ -39,7 +39,6 @@ Mock MPC(t=1, n=3) network and FHE example.
 
 Which outputs
 ```
-
 Alice:
         Encrypting Alice's Position { x: 2, y: 2 } with FHE client_key
         Serializing and encrypting position with MPC public_key...
