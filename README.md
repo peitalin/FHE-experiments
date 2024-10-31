@@ -36,7 +36,7 @@ MPC_Network:
         Alice's fog-of-war view range: 11
         should_reveal_bob?: true
 
-        Bob is within Alice's FOW view range, decrypting the Bob's position...
+        Bob is within Alice's FOW view range, decrypting Bob's position...
         Encrypting response and sending to Alice...
 
 Alice:
@@ -54,7 +54,7 @@ Then conditional on `should_reveal_bob = true`, the MPC network decrypts Bob's p
 
 ### Key issue: conditional decryption
 Need a way to conditionally reveal encrypted state to some users, without the MPC nodes seeing plaintext.
-- Decrypt Bob just for Alice to see, conditional on Bob being "close" to Alice.
+- Decrypt Bob's position just for Alice to see, conditional on Bob being "close" to Alice.
 
 Perhaps private-set-intersection (PSI) can help:
 [PSI](https://github.com/gausslabs/MP-PSI/blob/main/pkg/README.md):

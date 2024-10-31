@@ -160,7 +160,7 @@ async fn main() -> Result<()> {
             // or it can be intercepted and decrypted by anyone with the fhe_client_key
 
             if (should_reveal_bob) {
-                println!("\n\tBob is within Alice's FOW view range, decrypting the Bob's position...");
+                println!("\n\tBob is within Alice's FOW view range, decrypting Bob's position...");
                 let revealed_x2: u32 = fhe_x2.decrypt(&fhe_client_key);
                 let revealed_y2: u32 = fhe_x2.decrypt(&fhe_client_key);
                 // println!("\nBob's position: ({}, {})", revealed_x2, revealed_y2);
