@@ -65,9 +65,10 @@ Time elapsed: 12.706566s
 ```
 
 In the above example `should_reveal_bob` is a FHE ciphertext the MPC network decrypts and sees is `true`.
-Then conditional on `should_reveal_bob = true`, it decrypts Bob's position and re-encrypts it for Alice using
+Then conditional on `should_reveal_bob = true`, the MPC network decrypts Bob's position and re-encrypts it for Alice using
 Diffie-Hellman.
-- This is undesirable as the MPC network is trusted with decrypting Bob's position.
+- This is sub-optimal as the MPC network is trusted with decrypting Bob's position.
+- How do you know the MPC network decrypted just the `should_reveal_bob` boolean ciphertext, and not anything else?
 - We would need a way to Zk-prove that the MPC network decrypted Bob's position if and only if `should_reveal_bob = true`
 
 
@@ -75,7 +76,7 @@ Diffie-Hellman.
 Need a way to conditionally reveal encrypted state to some users, without the MPC nodes every seeing plaintext.
 - Decrypt Bob just for Alice to see, conditional on Bob being "close" to Alice.
 
-Perhap Private-set-intersection (PSI) can help:
+Perhaps private-set-intersection (PSI) can help:
 [PSI](https://github.com/gausslabs/MP-PSI/blob/main/pkg/README.md):
 - PSI being used for confidential "coincidence of wants" in social apps:
     - tinder
