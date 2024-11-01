@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-libp2p = { version = "0.54.1", features = ["tcp", "tls", "dns", "kad", "mdns", "async-std", "noise", "yamux", "websocket", "ping", "macros"] }
+libp2p = { version = "0.54.1", features = ["tcp", "tls", "dns", "kad", "mdns", "tokio", "noise", "yamux", "websocket", "ping", "macros"] }
 futures = "0.3.31"
-async-std = { version = "1.12.0", features = ["attributes"] }
+tokio  = { version = "1.41.0", features = ["full"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 serde = "1.0.210"

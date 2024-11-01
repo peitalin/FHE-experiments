@@ -2,8 +2,13 @@
 use std::error::Error;
 use std::time::Duration;
 
-use futures::{prelude::*, select};
-use async_std::io;
+use futures::prelude::*;
+use futures::stream::StreamExt;
+use tokio::{
+    io,
+    io::AsyncBufReadExt,
+    select
+};
 use libp2p::{
     kad::{self, store::{MemoryStore, MemoryStoreConfig}, Mode, Config},
     mdns,
@@ -26,17 +31,17 @@ use fhe_sunscreen::{EncryptedPosition, Position, User, AVS};
 #[derive(NetworkBehaviour)]
 struct Behaviour {
     kademlia: kad::Behaviour<MemoryStore>,
-    mdns: mdns::async_io::Behaviour,
+    mdns: mdns::tokio::Behaviour,
 }
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
 
     tracing_subscriber::fmt().with_env_filter(EnvFilter::from_default_env()).init();
     println!("\nSetting up IPFS node with Kademlia DHT...");
 
     let mut swarm = libp2p::SwarmBuilder::with_new_identity()
-        .with_async_std()
+        .with_tokio()
         .with_tcp(
             tcp::Config::default(),
             noise::Config::new,
@@ -73,7 +78,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
             Ok(Behaviour {
                 kademlia: kad_behaviour,
-                mdns: mdns::async_io::Behaviour::new(
+                mdns: mdns::tokio::Behaviour::new(
                     mdns::Config::default(),
                     key.public().to_peer_id(),
                 )?,
@@ -95,16 +100,16 @@ async fn main() -> Result<(), Box<dyn Error>> {
     swarm.behaviour_mut().kademlia.set_mode(Some(Mode::Server));
 
     // read full lines from stdin
-    let mut stdin = io::BufReader::new(io::stdin()).lines().fuse();
+    let mut stdin = io::BufReader::new(io::stdin()).lines();
     // Tell the swarm to listen on all interfaces and a random, OS-assigned port
     swarm.listen_on("/ip4/0.0.0.0/tcp/0".parse()?)?;
 
     loop {
         select! {
-            line = stdin.select_next_some() => handle_input_line(
+            Ok(Some(line)) = stdin.next_line() => handle_input_line(
                 swarm.local_peer_id().clone(),
                 &mut swarm.behaviour_mut().kademlia,
-                line.expect("stdin invalid input"),
+                line,
                 &mut user,
                 &mut avs
             ),
