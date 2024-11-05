@@ -64,15 +64,4 @@ Perhaps private-set-intersection (PSI) can help:
     - auctions
     - liking/upvoting risky content / political views
 
-
-### Bridge Behaviour
-
-This repo is intended just for Eigenlayer function calls, not general purpose function calls.
-
-When sending a TX to SenderCCIP bridge, if the CCIP message:
-
-| Contains Message | Sends Funds  | Outcome  |
-| ------- | --- | --- |
-| yes | yes | The TX reverts early on the SenderCCIP contract if the Message is not a "depositIntoStrategy" function call to make it harder for frontend clients to make mistakes. We don't want frontend clients accidentally sending funds to L1 for a "queueWithdrawal" call for instance. |
-| yes | no | Tries to match an Eigenlayer function selector and execute that function (queueWithdrawal, claim rewards, delegate, etc). If no function selectors match, nothing happens.
-| no | yes | Simply bridges funds |
+d
